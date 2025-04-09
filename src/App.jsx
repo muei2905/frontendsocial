@@ -6,17 +6,28 @@ import SettingPage from "./pages/SettingPage";
 import ProfilePage from "./pages/ProfilePage";
 import FriendPage from "./pages/FriendPage";
 import NewsFeedPage from "./pages/NewFeedsPage"
+import { ForgotPass } from "./pages/ForgotPassPage";
+import {Verification} from "./pages/VerificatonPage"
+import { ResetPass } from "./pages/ResetPassPage";
 
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useAuthStore } from "./store/useAuthStore";
 import { useEffect, useState } from "react";
 import { useThemeStore } from "./store/useThemeStore";
 
 const App = () => {
+  const { authUser, checkAuth, socket } = useAuthStore();
   const { theme } = useThemeStore();
   const [notifications, setNotifications] = useState([]);
-  const authUser = null;
- 
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authUser) {
+      console.log("🔄 Gọi checkAuth()");
+      checkAuth(navigate);
+    }
+  }, []);
 
  
 
@@ -24,7 +35,7 @@ const App = () => {
     <div data-theme={theme}>
       <div className="flex">
         {/* Navbar dọc bên trái */}
-        <Navbar />
+        {authUser && <Navbar />}
         {/* Nội dung chính */}
         <div className="flex-1 ml-[84px] h-full ">
           <Routes className="h-full">
@@ -36,6 +47,9 @@ const App = () => {
             <Route path="/settings" element={<SettingPage />} />
             <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
             <Route path="/friends" element={authUser ? <FriendPage /> : <Navigate to="/login" />} />
+            <Route path="/forgotpass" element={<ForgotPass />} />
+            <Route path="/verify" element={<Verification />} />
+            <Route path="/resetpass" element={<ResetPass/>} />
           </Routes>
         </div>
       </div>

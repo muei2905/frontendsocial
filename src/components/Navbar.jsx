@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { MessageSquare, Users, Settings, LogOut, Newspaper } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { MessageSquare, Users, Settings, LogOut, Newspaper,User } from "lucide-react";
+import { useAuthStore } from "../store/useAuthStore";
 
 const Navbar = () => {
+  const { authUser, logout } = useAuthStore();
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
 
   const handleNavItemClick = (path) => {
@@ -15,11 +19,17 @@ const Navbar = () => {
       setIsExpanded(true);
     }
   };
-
+  const handleLogout = () => {
+    if (isLoggingOut) return; // Ngăn gọi logout nhiều lần
+    setIsLoggingOut(true);
+    console.log("🛑 Calling logout function...");
+    logout(navigate);
+    setIsLoggingOut(false);
+  };
   return (
     <aside className={`rounded-r-2xl z-20 fixed left-0 top-0 h-full bg-gray-900 text-white ${isExpanded ? "w-64" : "w-20"} flex flex-col items-center py-6 transition-all`}>
 
-      {/* <div className="flex flex-col items-center mb-6">
+      <div className="flex flex-col items-center mb-6">
         <img
           src={authUser?.profilePic || "/default-avatar.png"}
           alt="Profile"
@@ -31,18 +41,20 @@ const Navbar = () => {
             <p className="text-sm text-gray-400">@{authUser?.username || "unknown"}</p>
           </div>
         )}
-      </div> */}
+      </div>
 
       {/* Menu */}
       <nav className="w-full space-y-2 flex flex-col items-center">
         <NavItem to="/newsfeeds" icon={Newspaper} label="News Feed" isExpanded={isExpanded} active={location.pathname === "/newsfeeds"} onClick={() => handleNavItemClick("/newsfeed")} />
         <NavItem to="/messages" icon={MessageSquare} label="Messages" badge={5} isExpanded={isExpanded} active={location.pathname === "/messages"} onClick={() => handleNavItemClick("/messages")} />
         <NavItem to="/friends" icon={Users} label="Friends" badge={2} isExpanded={isExpanded} active={location.pathname === "/friends"} onClick={() => handleNavItemClick("/friends")} />
+        <NavItem to="/profile" icon={User} label="Profile" isExpanded={isExpanded} active={location.pathname === "/profile"} onClick={() => handleNavItemClick("/profile")} />
         <NavItem to="/settings" icon={Settings} label="Settings" isExpanded={isExpanded} active={location.pathname === "/settings"} onClick={() => handleNavItemClick("/settings")} />
       </nav>
 
       {/* Logout Button */}
-      <button className="mt-auto bg-gray-700 px-4 py-2 rounded-lg w-11/12 flex items-center justify-center gap-2 hover:bg-gray-600">
+      <button className="mt-auto bg-gray-700 px-4 py-2 rounded-lg w-11/12 flex items-center justify-center gap-2 hover:bg-gray-600"
+          onClick={handleLogout}>
         <LogOut className="w-5 h-5" />
         {isExpanded && <span>Log out</span>}
       </button>
