@@ -3,7 +3,6 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-// const BASE_URL = "https://backendsocial-1.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
   authUser: JSON.parse(localStorage.getItem("authUser")) || null,
@@ -22,7 +21,7 @@ export const useAuthStore = create((set, get) => ({
     const authData = localStorage.getItem("authUser");
   
     if (!authData) {
-      console.log("❌ Not authenticated, navigating to /login");
+      console.log("Not authenticated, navigating to /login");
       set({ authUser: null });
       navigate("/login");
       return;
@@ -33,7 +32,7 @@ export const useAuthStore = create((set, get) => ({
       if (!user || !user.jwt) throw new Error("Invalid user data"); // Thay _id bằng jwt
   
       set({ authUser: user });
-      console.log("✅ Authenticated, navigating to /settings");
+      console.log("Authenticated, navigating to /settings");
       navigate("/settings");
     } catch (error) {
       console.error("Auth error:", error);
