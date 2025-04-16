@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
-import { io } from "socket.io-client";
-
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { useMessageStore } from "./useMessageStore"; // Import store quản lý tin nhắn
 
 export const useAuthStore = create((set, get) => ({
   authUser: JSON.parse(localStorage.getItem("authUser")) || null,
@@ -19,23 +20,24 @@ export const useAuthStore = create((set, get) => ({
 
   checkAuth: async (navigate) => {
     const authData = localStorage.getItem("authUser");
-  
+
     if (!authData) {
-      console.log("Not authenticated, navigating to /login");
       set({ authUser: null });
       navigate("/login");
       return;
     }
-  
+
     try {
       const user = JSON.parse(authData);
-      if (!user || !user.jwt) throw new Error("Invalid user data"); // Thay _id bằng jwt
-  
+      if (!user || !user.jwt)
+        throw new Error("Dữ liệu người dùng không hợp lệ");
+
       set({ authUser: user });
-      console.log("Authenticated, navigating to /settings");
-      navigate("/settings");
+      navigate("/newsfeeds");
+
+      // get().connectSocket();
     } catch (error) {
-      console.error("Auth error:", error);
+      console.error("Lỗi xác thực:", error);
       set({ authUser: null });
       localStorage.removeItem("authUser");
       navigate("/login");
@@ -49,10 +51,10 @@ export const useAuthStore = create((set, get) => ({
       localStorage.setItem("authUser", JSON.stringify(res.data));
 
       set({ authUser: res.data });
-      toast.success("Account created successfully");
-      // get().connectSocket();
+      toast.success("Tạo tài khoản thành công");
+      get().connectSocket();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Signup failed");
+      toast.error(error.response?.data?.message || "Đăng ký thất bại");
     } finally {
       set({ isSigningUp: false });
     }
@@ -62,26 +64,26 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
-  
-      // Kiểm tra xem res.data có tồn tại và có jwt hay không
+
       if (!res.data || !res.data.jwt) {
-        throw new Error("Invalid login response: Missing JWT");
+        throw new Error("Phản hồi đăng nhập không hợp lệ: Thiếu JWT");
       }
-  
-      // Lưu thông tin người dùng vào authUser
+
       const userData = {
         jwt: res.data.jwt,
         role: res.data.role,
-        email: data.email, // Lấy email từ dữ liệu gửi lên vì server không trả về
+        email: data.email,
       };
-  
+
       set({ authUser: userData });
       localStorage.setItem("authUser", JSON.stringify(userData));
-      toast.success("Logged in successfully");
+      toast.success("Đăng nhập thành công");
+      get().connectSocket();
       return null;
     } catch (error) {
-      console.error("Login error:", error);
-      const errorMessage = error?.response?.data?.message || "Login failed";
+      console.error("Lỗi đăng nhập:", error);
+      const errorMessage =
+        error?.response?.data?.message || "Đăng nhập thất bại";
       toast.error(errorMessage);
       set({ authUser: null });
       localStorage.removeItem("authUser");
@@ -90,19 +92,19 @@ export const useAuthStore = create((set, get) => ({
       set({ isLoggingIn: false });
     }
   },
-  
-  logout: (navigate) => {
 
+  logout: (navigate) => {
     if (typeof navigate !== "function") {
-      console.error("🚨 navigate is not a function!");
+      console.error("navigate không phải là một hàm!");
       return;
     }
 
+    get().disconnectSocket();
     localStorage.removeItem("authUser");
     set({ authUser: null });
-    toast.success("Logged out successfully");
+    toast.success("Đăng xuất thành công");
 
-    navigate("/login"); // Điều hướng về trang đăng nhập
+    navigate("/login");
   },
 
   sendOtp: async (email, navigate) => {
@@ -110,15 +112,16 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/forgot-password", { email });
       if (!res.data || typeof res.data !== "string") {
-        throw new Error("Invalid response: Expected JWT string");
+        throw new Error("Phản hồi không hợp lệ: Cần chuỗi JWT");
       }
       localStorage.setItem("forgotPasswordToken", res.data);
-      localStorage.setItem("forgotPasswordEmail", email); // Lưu email
-      toast.success("Verification code sent to your email!");
+      localStorage.setItem("forgotPasswordEmail", email);
+      toast.success("Mã xác nhận đã được gửi đến email của bạn!");
       navigate("/verify");
       return res.data;
     } catch (error) {
-      const errorMessage = error?.response?.data?.message || "Failed to send verification code";
+      const errorMessage =
+        error?.response?.data?.message || "Không thể gửi mã xác nhận";
       toast.error(errorMessage);
       throw error;
     } finally {
@@ -126,64 +129,68 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // Thêm hàm resendForgotPassword
   resendOtp: async () => {
     set({ isSendingForgotPassword: true });
     try {
       const email = localStorage.getItem("forgotPasswordEmail");
       if (!email) {
-        throw new Error("No email found. Please start over.");
+        throw new Error("Không tìm thấy email. Vui lòng bắt đầu lại.");
       }
 
       const res = await axiosInstance.post("/auth/forgot-password", { email });
       if (!res.data || typeof res.data !== "string") {
-        throw new Error("Invalid response: Expected JWT string");
+        throw new Error("Phản hồi không hợp lệ: Cần chuỗi JWT");
       }
 
-      localStorage.setItem("forgotPasswordToken", res.data); // Cập nhật token mới
-      toast.success("A new verification code has been sent to your email!");
+      localStorage.setItem("forgotPasswordToken", res.data);
+      toast.success("Mã xác nhận mới đã được gửi đến email của bạn!");
       return res.data;
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "Failed to resend code";
+      const errorMessage =
+        err.response?.data?.message || "Không thể gửi lại mã";
       toast.error(errorMessage);
       throw err;
     } finally {
       set({ isSendingForgotPassword: false });
     }
   },
-  
+
   verifyOtp: async (otpCode, navigate) => {
     set({ isVerifyingOtp: true });
     try {
       if (!otpCode || otpCode.length !== 6) {
-        throw new Error("Please enter a valid 6-digit OTP");
+        throw new Error("Vui lòng nhập mã OTP 6 chữ số hợp lệ");
       }
-  
+
       const token = localStorage.getItem("forgotPasswordToken");
       if (!token) {
-        throw new Error("No verification token found. Please request a new code.");
+        throw new Error(
+          "Không tìm thấy token xác nhận. Vui lòng yêu cầu mã mới."
+        );
       }
-  
+
       const res = await axiosInstance.post(
         "/auth/verify-otp",
-        { otp: otpCode,
-          token: token }, // Gửi token cùng với OTP
+        { otp: otpCode, token: token },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-  
+
       const { token: newToken, message } = res.data;
       localStorage.setItem("resetPasswordToken", newToken);
-      toast.success(message || "OTP verified successfully!");
+      toast.success(message || "Xác nhận OTP thành công!");
       setTimeout(() => {
-        navigate("/resetpass"); // Điều hướng tới ResetPass sau khi thành công
+        navigate("/resetpass");
       }, 100);
       return { token: newToken, message };
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Invalid OTP or expired token";
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "OTP không hợp lệ hoặc token đã hết hạn";
       toast.error(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -196,9 +203,11 @@ export const useAuthStore = create((set, get) => ({
     try {
       const token = localStorage.getItem("resetPasswordToken");
       if (!token) {
-        throw new Error("No reset token found. Please verify OTP again.");
+        throw new Error(
+          "Không tìm thấy token đặt lại. Vui lòng xác nhận OTP lại."
+        );
       }
-  
+
       const res = await axiosInstance.post(
         "/auth/reset-password",
         { password },
@@ -208,62 +217,170 @@ export const useAuthStore = create((set, get) => ({
           },
         }
       );
-  
-      // API trả về chuỗi text, không cần parse thêm
-      const responseData = res.data; // Chuỗi "Mật khẩu đã được đặt lại thành công."
-  
+
+      const responseData = res.data;
+
       localStorage.removeItem("resetPasswordToken");
       localStorage.removeItem("forgotPasswordToken");
       localStorage.removeItem("forgotPasswordEmail");
       setTimeout(() => {
-        navigate("/login"); // Điều hướng về /login sau 0.7 giây
+        navigate("/login");
       }, 700);
-      return responseData; // Trả về chuỗi text trực tiếp
+      return responseData;
     } catch (err) {
       const errorMessage = err.response?.data || { message: err.message };
-      toast.error(typeof errorMessage === "string" ? errorMessage : errorMessage.message || "Failed to reset password");
-      throw new Error(JSON.stringify(errorMessage)); // Chuyển đổi thành chuỗi JSON để xử lý trong component
+      toast.error(
+        typeof errorMessage === "string"
+          ? errorMessage
+          : errorMessage.message || "Không thể đặt lại mật khẩu"
+      );
+      throw new Error(JSON.stringify(errorMessage));
     } finally {
       set({ isResettingPassword: false });
     }
   },
-  updateProfile: async (data) => {
-    set({ isUpdatingProfile: true });
-    try {
-      const res = await axiosInstance.put("/auth/update-profile", data);
-      set({ authUser: res.data });
-      toast.success("Profile updated successfully");
-    } catch (error) {
-      console.log("error in update profile:", error);
-      toast.error(error.response.data.message);
-    } finally {
-      set({ isUpdatingProfile: false });
-    }
-  },
 
   connectSocket: () => {
-    const { authUser, socket } = get();
-    console.log("Current socket:", socket);
-
-    if (!authUser) {
-      get().disconnectSocket();
+    const authUser = get().authUser;
+    if (!authUser || !authUser.jwt) {
+      console.error(
+        "Không thể kết nối socket: Không tìm thấy người dùng đã xác thực"
+      );
       return;
     }
 
-    if (socket == null) {
-      console.log("Creating new socket...");
-      const newSocket = io(BASE_URL, {
-        query: { userId: authUser._id },
-      });
+    const userId = authUser.email;
 
-      set({ socket: newSocket });
-      newSocket.on("getOnlineUsers", (userId) => {
-        set({ onlineUsers: userId });
-      });
-    }
+    const socket = new SockJS("https://backendsocial-1.onrender.com/ws");
+    const stompClient = new Client({
+      webSocketFactory: () => socket,
+      connectHeaders: {
+        Authorization: `Bearer ${authUser.jwt}`,
+      },
+      onConnect: () => {
+        console.log(`Đã kết nối với WebSocket cho user ${userId}`);
+
+        stompClient.subscribe(`/user/${userId}/queue/messages`, (message) => {
+          try {
+            const messageData = JSON.parse(message.body);
+
+            if (
+              !messageData ||
+              typeof messageData !== "object" ||
+              !messageData.senderId ||
+              !messageData.receiverId
+            ) {
+              console.warn(
+                "Dữ liệu tin nhắn WebSocket không hợp lệ:",
+                messageData
+              );
+              return;
+            }
+
+            const timestamp =
+              messageData.timestamp ||
+              messageData.timeStamp ||
+              String(Date.now());
+
+            if (!timestamp || isNaN(parseInt(timestamp))) {
+              console.warn(
+                "Timestamp không hợp lệ, dùng thời gian hiện tại:",
+                timestamp
+              );
+              messageData.timestamp = String(Date.now());
+            } else {
+              messageData.timestamp = String(timestamp);
+            }
+
+            if (!messageData.sender) {
+              messageData.sender = {
+                id: messageData.senderId,
+                fullName:
+                  messageData.senderId === userId
+                    ? authUser?.fullName || "Người dùng"
+                    : selectedUserDetails?.fullName || "Người dùng",
+                avatar:
+                  messageData.senderId === userId
+                    ? authUser?.avatar || "/avatar.png"
+                    : selectedUserDetails?.avatar || "/avatar.png",
+              };
+            }
+
+            messageData.isRecalled = messageData.isRecalled || false;
+
+            const { setMessages, setShouldScrollToBottom } =
+              useMessageStore.getState();
+            setMessages((prev = []) => {
+              const isDuplicate = prev.some(
+                (msg) =>
+                  msg.content === messageData.content &&
+                  msg.senderId === messageData.senderId &&
+                  msg.receiverId === messageData.receiverId &&
+                  msg.timestamp === messageData.timestamp
+              );
+              if (isDuplicate) {
+                return prev;
+              }
+
+              const updatedMessages = [...prev, messageData];
+              return updatedMessages.sort((a, b) => {
+                const timestampA = a?.timestamp ? parseInt(a.timestamp) : 0;
+                const timestampB = b?.timestamp ? parseInt(b.timestamp) : 0;
+                return timestampA - timestampB;
+              });
+            });
+            setShouldScrollToBottom(true);
+          } catch (error) {
+            console.error("Lỗi khi xử lý tin nhắn WebSocket:", error);
+          }
+        });
+
+        stompClient.subscribe(`/user/${userId}/queue/delete`, (message) => {
+          try {
+            const recalledMessage = JSON.parse(message.body);
+            const messageId = recalledMessage.messageId;
+            console.log("Nhận được thông báo thu hồi:", recalledMessage);
+            const { setMessages } = useMessageStore.getState();
+            setMessages((prev) =>
+              prev.map((msg) =>
+                String(msg.id) === String(messageId)
+                  ? {
+                      ...msg,
+                      isRecalled: true,
+                      content: "Tin nhắn này đã bị thu hồi.",
+                      picture: null,
+                    }
+                  : msg
+              )
+            );
+          } catch (error) {
+            console.error("Lỗi khi xử lý thông báo thu hồi tin nhắn:", error);
+          }
+        });
+      },
+      onStompError: (frame) => {
+        console.error("Lỗi STOMP:", frame);
+        toast.error("Không thể kết nối đến WebSocket. Vui lòng thử lại sau!");
+      },
+      onWebSocketError: (err) => {
+        console.error("Lỗi WebSocket:", err);
+        toast.error("Lỗi kết nối WebSocket!");
+      },
+      reconnectDelay: 5000,
+    });
+
+    stompClient.activate();
+    set({ socket: stompClient });
   },
 
   disconnectSocket: () => {
-    if (get().socket?.connected) get().socket.disconnect();
+    const socket = get().socket;
+    if (socket) {
+      socket.deactivate();
+      set({ socket: null });
+      console.log("WebSocket đã ngắt kết nối thành công");
+    } else {
+      console.log("Không có kết nối WebSocket để ngắt");
+    }
   },
 }));

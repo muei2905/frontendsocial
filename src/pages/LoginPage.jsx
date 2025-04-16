@@ -21,7 +21,6 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(""); // Xóa lỗi cũ trước khi login
-    console.log("Dữ liệu nhập vào:", formData);
     if (!formData.email || !formData.password) {
       setError("Email and password are required");
       return; // Không gửi request nếu form chưa đủ dữ liệu

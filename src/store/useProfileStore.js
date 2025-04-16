@@ -39,4 +39,18 @@ export const useProfileStore = create((set, get) => ({
       });
     }
   },
+
+  updateProfile: async (data) => {
+    set({ isUpdatingProfile: true });
+    try {
+      const res = await axiosInstance.put("/auth/update-profile", data);
+      set({ authUser: res.data });
+      toast.success("Cập nhật hồ sơ thành công");
+    } catch (error) {
+      console.log("Lỗi khi cập nhật hồ sơ:", error);
+      toast.error(error.response.data.message);
+    } finally {
+      set({ isUpdatingProfile: false });
+    }
+  },
 }));
