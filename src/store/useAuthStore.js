@@ -3,7 +3,6 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import { useMessageStore } from "./useMessageStore"; // Import store quản lý tin nhắn
 
 export const useAuthStore = create((set, get) => ({
   authUser: JSON.parse(localStorage.getItem("authUser")) || null,
