@@ -27,17 +27,17 @@ const Navbar = () => {
     setIsLoggingOut(false);
   };
   return (
-    <aside className={`rounded-r-2xl z-20 fixed left-0 top-0 h-full bg-gray-900 text-white ${isExpanded ? "w-64" : "w-20"} flex flex-col items-center py-6 transition-all`}>
+    <aside className={`rounded-r-2xl z-20 fixed left-0 top-0 h-full text-white ${isExpanded ? "w-64" : "w-20"} flex flex-col items-center py-6 transition-all`}>
 
       <div className="flex flex-col items-center mb-6">
         <img
-          src={authUser?.profilePic || "/default-avatar.png"}
+          src={authUser.image}
           alt="Profile"
           className={`rounded-full mb-2 ${isExpanded ? "w-24" : "w-14"}` }
         />
         {isExpanded && (
           <div className="text-center">
-            <h2 className="text-lg font-semibold">{authUser?.fullName || "Guest"}</h2>
+            <h2 className="text-lg font-semibold">{authUser?.userName || "Guest"}</h2>
             <p className="text-sm text-gray-400">@{authUser?.username || "unknown"}</p>
           </div>
         )}

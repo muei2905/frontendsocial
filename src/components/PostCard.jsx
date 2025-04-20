@@ -1,92 +1,76 @@
-import {
-  HeartIcon,
-  MessageSquareIcon,
-  MoreVerticalIcon,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar";
-import { Button } from "./ui/Button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "./ui/Card";
+import { useState } from "react";
+import { Heart, MessageCircle } from "lucide-react";
+import { useAuthStore } from "../store/useAuthStore";
 
-export const PostCard = ({ post, user }) => {
-  // Định dạng thời gian theo "dd thg MM, yyyy"
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, "0"); // Lấy ngày, thêm số 0 nếu cần
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Lấy tháng (thêm 1 vì tháng bắt đầu từ 0)
-    const year = date.getFullYear();
-    return `${day} thg ${month}, ${year}`;
+const PostCard = ({ post }) => {
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.likesCount);
+
+
+
+  const toggleLike = () => {
+    setLiked(!liked);
+    setLikeCount(liked ? likeCount - 1 : likeCount + 1);
   };
 
-  const formattedDate = formatDate(post.createAt);
-
   return (
-    <Card className="border-[#2c2c2c] border-[0.5px] rounded-2xl">
-      <CardHeader className="flex flex-row items-center justify-between p-4 border-b-[0.5px] border-[#2c2c2c]">
-        <div className="flex items-center gap-2">
-          <Avatar className="w-[50px] h-[50px]">
-            <AvatarImage
-              src={
-                user?.avatar ||
-                "https://c.animaapp.com/taiAUsBV/img/avatar-2@2x.png"
-              }
-              alt={user?.fullName || "User"}
-            />
-            <AvatarFallback>
-              {user?.fullName ? user.fullName[0] : "T"}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-bold text-xl">
-              {user?.fullName || "Unknown"}
-            </h3>
-            <p className="text-sm text-gray-500">{formattedDate}</p>
-          </div>
+    <div className="bg-gray-800 text-white shadow-lg rounded-lg  w-3/4">
+      <div className="flex items-center mb-2 pt-4 pl-4">
+        <img
+          // src={post.createdBy.profilePic || authUser.profilePic || ''}
+          alt="Avatar"
+          className="w-10 h-10 rounded-full"
+        />
+        <div className="ml-2">
+          <h3 className="font-semibold">{post.userName || "dá"}</h3>
+          <p className="text-sm text-gray-400">
+            {new Date(post.createdAt).toLocaleString()}
+          </p>
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6">
-          <MoreVerticalIcon className="h-6 w-6" />
-        </Button>
-      </CardHeader>
+      </div>
 
-      {post.imageUrl && (
-        <CardContent className="p-0 border-b-[0.5px] border-[#2c2c2c] flex justify-center items-center">
+      <p className="text-gray-200 mb-3 pl-4">{post.userName}</p>
+
+      {post.images && post.images.length === 3 && (
+        <div className="grid grid-cols-2 gap-2">
           <img
-            src={post.imageUrl}
-            alt="Post image"
-            className="max-w-full h-auto object-contain"
+            src={post.images[0]}
+            alt="Main Image"
+            className="w-full h-full object-cover "
           />
-        </CardContent>
-      )}
 
-      {post.content && (
-        <CardContent className="p-4 border-b-[0.5px] border-[#2c2c2c]">
-          <p>{post.content}</p>
-        </CardContent>
-      )}
-
-      <CardFooter className="flex items-center p-4">
-        <div className="flex gap-6">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="p-0">
-              <HeartIcon className="w-[34px] h-[34px]" />
-            </Button>
-            <span className="font-medium">{post.totalLike} likes</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="p-0">
-              <MessageSquareIcon className="w-[34px] h-[34px]" />
-            </Button>
-            <span className="font-medium">
-              {post.totalCmt} comments
-            </span>
+          {/* Cột 2: Hai ảnh nhỏ */}
+          <div className="grid gap-2">
+            <img
+              src={post.images[1]}
+              alt="Sub Image 1"
+              className="w-full h-full object-cover "
+            />
+            <img
+              src={post.images[2]}
+              alt="Sub Image 2"
+              className="w-full h-full object-cover "
+            />
           </div>
         </div>
-      </CardFooter>
-    </Card>
+      )}
+
+
+
+      <div className="flex items-center justify-between text-gray-400 p-3">
+        <button onClick={toggleLike} className="flex items-center gap-1">
+          <Heart
+            className={`w-5 h-5 ${liked ? "text-red-500 fill-red-500" : "text-gray-400"}`}
+          />
+          <span>{likeCount}</span>
+        </button>
+
+        <div className="flex items-center gap-1">
+          <MessageCircle className="w-5 h-5 text-gray-400" />
+          <span>{post.comments.length}</span>
+        </div>
+      </div>
+    </div>
   );
 };
 
