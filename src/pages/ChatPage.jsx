@@ -1,12 +1,17 @@
+import { useState } from "react";
+import ChatContainer from "../components/ChatContainer";
+import Sidebar from "../components/Sidebar";
 
 
-const HomePage = () => {
-  const { selectedUser } = useChatStore();
+const ChatApp = () => {
+  const [selectedUser, setSelectedUser] = useState(null);
+
   return (
-    
-    
-    <div>Trang chat</div>
+    <div className="flex h-screen"> 
+      <Sidebar selectedUser={selectedUser} setSelectedUser={setSelectedUser} />
+      <ChatContainer selectedUser={selectedUser} setSelectedUser={setSelectedUser} />
+    </div>
   );
 };
 
-export default HomePage;
+export default ChatApp;
