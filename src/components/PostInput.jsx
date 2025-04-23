@@ -140,15 +140,15 @@ const PostInput = ({ onPost }) => {
           <Send className="w-5 h-5" />
           Đăng
         </button>
-
-        {/* Overlay loading */}
         {isLoadUpPost && (
           <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center rounded-xl z-10">
             <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 border-solid mb-4"></div>
             <p className="text-white font-medium">Đang xử lý...</p>
           </div>
         )}
+
       </div>
+
     </div>
   );
 };

@@ -17,6 +17,7 @@ export const useAuthStore = create((set, get) => ({
   onlineUsers: [],
   setOnlineUsers: (users) => set({ onlineUsers: users }),
   socket: null,
+  
 
   checkAuth: async (navigate) => {
     const authData = localStorage.getItem("authUser");
@@ -74,11 +75,18 @@ export const useAuthStore = create((set, get) => ({
       if (!res.data || !res.data.jwt) {
         throw new Error("Phản hồi đăng nhập không hợp lệ: Thiếu JWT");
       }
-
+      const profile = await axiosInstance.get("/api/users/profile",
+        {
+        headers: {
+          Authorization: `Bearer ${res.data.jwt}`,
+        },
+      });
       const userData = {
         jwt: res.data.jwt,
         role: res.data.role,
         email: data.email,
+        userName: profile.data.fullName,
+        image: profile.data.avatar // Lấy email từ dữ liệu gửi lên vì server không trả về
       };
 
       set({ authUser: userData });

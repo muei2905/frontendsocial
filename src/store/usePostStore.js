@@ -14,7 +14,7 @@ export const usePostStore = create((set, get) => ({
   limit: 10,
   isLoading: false,
   isLoadingLike: null,
-  isLoadUpPost : false,
+  isLoadUpPost: false,
 
   createPost: async (data) => {
     set({ isLoadUpPost: true });
@@ -26,10 +26,10 @@ export const usePostStore = create((set, get) => ({
     try {
       const formData = new FormData();
       formData.append("file", data.imageUrl);
-      formData.append("upload_preset", present); 
+      formData.append("upload_preset", present);
 
       const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, 
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
         {
           method: "POST",
           body: formData,
@@ -44,7 +44,7 @@ export const usePostStore = create((set, get) => ({
       console.error("Upload error:", error);
     }
 
-    
+
     const authUser = useAuthStore.getState().authUser;
     try {
       data.imageUrl = image
@@ -85,8 +85,7 @@ export const usePostStore = create((set, get) => ({
       set({ posts: data });
 
     } catch (error) {
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra");
-    } finally {
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra");    } finally {
       set({ isLoading: false });
     }
   },
@@ -264,4 +263,5 @@ export const usePostStore = create((set, get) => ({
       set({ isLoading: false });
     }
   },
+
 }));

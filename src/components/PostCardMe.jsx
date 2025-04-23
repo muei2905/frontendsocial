@@ -89,8 +89,7 @@ const PostCardMe = ({ post }) => {
 
 
   return (
-    <div className="relative w-[58.4%] my-1">
-      {/* Overlay khi loading like */}
+    <div className="relative w-[80%] my-1">
       {isLoadingLike === post.id && (
         <div className="absolute inset-0 bg-opacity-50 z-10 flex flex-col items-center justify-center rounded-lg">
           <div className="relative w-8 h-8">
