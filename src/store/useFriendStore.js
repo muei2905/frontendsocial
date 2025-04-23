@@ -64,7 +64,7 @@ export const useFriendStore = create((set, get) => ({
         const jwt = authUser.jwt;
 
         try {
-            const res = await axiosInstance.get(`/api/friendships/search?name=${encodeURIComponent(name)}`, {
+            const res = await axiosInstance.get(`/api/users/findUser?email=${encodeURIComponent(name)}`, {
                 headers: {
                     Authorization: `Bearer ${jwt}`,
                 },
@@ -83,7 +83,7 @@ export const useFriendStore = create((set, get) => ({
                 headers: { Authorization: `Bearer ${jwt}` },
             });
     
-            if (response.status === 204) {
+            if (response.status === 200) {
                 console.log("Đã xóa bạn thành công");
                 return true;
             } else {
@@ -99,16 +99,64 @@ export const useFriendStore = create((set, get) => ({
 
     acceptFriendRequest: async (id) => {
         const jwt = useAuthStore.getState().authUser.jwt;
-        await axiosInstance.put(`/api/friendships/accept/${id}`, {}, {
-            headers: { Authorization: `Bearer ${jwt}` },
-        });
+        try {
+            const response = await axiosInstance.post(`/api/friendships/accept/${id}`, {}, {
+                headers: { Authorization: `Bearer ${jwt}` },
+            });
+    
+            if (response.status === 200) {
+                console.log("Đã trở thành bạn bè");
+                return true;
+            } else {
+                console.error("Có lỗi khi thêm bạn bè:", response);
+                return false;
+            }
+        } catch (error) {
+            console.error("Lỗi khi thêm bạn:", error);
+            return false;
+        }
     },
 
     cancelSentRequest: async (id) => {
         const jwt = useAuthStore.getState().authUser.jwt;
-        await axiosInstance.delete(`/api/friendships/cancel/${id}`, {
-            headers: { Authorization: `Bearer ${jwt}` },
-        });
-    }
+        try {
+            const response = await axiosInstance.delete(`/api/friendships/cancel?friendId=${id}`, {
+                headers: { Authorization: `Bearer ${jwt}` },
+            });
+    
+            if (response.status === 200) {
+                console.log(response.data)
+                console.log("Đã xóa lời mời thành côngggg");
+                return true;
+            } else {
+                console.error("Có lỗi khi xóa lời mời kết bạn:", response);
+                return false;
+            }
+        } catch (error) {
+            console.error("Lỗi khi xóa lời mời:", error);
+            return false;
+        }
+    },
+
+    sendFriendRequest: async (id) => {
+        const jwt = useAuthStore.getState().authUser.jwt;
+        try {
+            const response = await axiosInstance.post(`/api/friendships/add/${id}`, {}, {
+                headers: { Authorization: `Bearer ${jwt}` },
+            });
+    
+            if (response.status === 200) {
+                console.log("Đã gửi lời mời bạn thành công");
+                return true;
+            } else {
+                console.error("Có lỗi khi gửi lời mời kết bạn:", response);
+                return false;
+            }
+        } catch (error) {
+            console.error("Lỗi khi xóa bạn:", error);
+            return false;
+        }
+    },
+    
 
 }));

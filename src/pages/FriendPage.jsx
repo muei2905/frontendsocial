@@ -16,7 +16,8 @@ const FriendPage = () => {
     searchFriend,
     deleteFriend,
     acceptFriendRequest,
-    cancelSentRequest
+    cancelSentRequest,
+    sendFriendRequest
   } = useFriendStore();
 
   useEffect(() => {
@@ -25,51 +26,83 @@ const FriendPage = () => {
     getpendingRequests();
   }, [getFriend, getsentRequests, getpendingRequests]);
 
-  const getButton = (type, userId) => {
+  const getButton = (user) => {
+    const isFriend = friends.some(friend => friend.id === user.id);
+    const isSentRequest = sentRequests.some(req => req.id === user.id);
+    const isPendingRequest = pendingRequests.some(req => req.id === user.id);
+
+    const handleRemove = async()=>{
+      await cancelSentRequest(user.id);
+      await getpendingRequests(); 
+    }
     const handleAction = async () => {
       try {
-        if (type === 'friend') {
-          await deleteFriend(userId);
-          await getFriend();
-        } else if (type === 'sent') {
-          await cancelSentRequest(userId);
-          await getsentRequests();
-        } else if (type === 'pending') {
-          await acceptFriendRequest(userId);
-          await getpendingRequests();
-          await getFriend(); // cập nhật lại danh sách bạn bè mới
+        if (isFriend) {
+          await deleteFriend(user.id);
+          await getFriend(); // Cập nhật lại danh sách bạn bè
+        } else if (isSentRequest) {
+          await cancelSentRequest(user.id);
+          await getsentRequests(); // Cập nhật lại danh sách yêu cầu đã gửi
+        } else if (isPendingRequest) {
+          await acceptFriendRequest(user.id);
+          await getpendingRequests(); // Cập nhật lại danh sách yêu cầu chờ chấp nhận
+          await getFriend(); // Cập nhật lại danh sách bạn bè
+        } else {
+          await sendFriendRequest(user.id); // Gửi lời mời kết bạn
+          await getsentRequests(); // Cập nhật lại danh sách yêu cầu đã gửi
         }
       } catch (error) {
         console.error("Lỗi xử lý hành động:", error);
       }
     };
 
-    const buttonConfig = {
-      friend: {
-        label: 'Xóa bạn',
-        class: 'bg-red-500 hover:bg-red-600'
-      },
-      sent: {
-        label: 'Hủy lời mời',
-        class: 'bg-yellow-500 hover:bg-yellow-600'
-      },
-      pending: {
-        label: 'Chấp nhận',
-        class: 'bg-green-500 hover:bg-green-600'
-      }
-    };
-
-    const config = buttonConfig[type];
-    if (!config) return null;
-
-    return (
-      <button
-        onClick={handleAction}
-        className={`${config.class} text-white px-3 py-1 rounded text-sm`}
-      >
-        {config.label}
-      </button>
-    );
+    if (isFriend) {
+      return (
+        <button
+          onClick={handleAction}
+          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+        >
+          Xóa bạn
+        </button>
+      );
+    } else if (isSentRequest) {
+      return (
+        <button
+          onClick={handleAction}
+          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm"
+        >
+          Hủy lời mời
+        </button>
+      );
+    } else if (isPendingRequest) {
+      return (
+        <div className="flex gap-2">
+          <button
+            onClick={handleAction}
+            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+          >
+            Chấp nhận
+          </button>
+          <button
+            onClick={handleRemove}
+            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+          >
+            Gỡ yêu cầu
+          </button>
+        </div>
+      );
+      
+    } else {
+      // Người lạ: Hiển thị nút "Kết bạn"
+      return (
+        <button
+          onClick={handleAction}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+        >
+          Kết bạn
+        </button>
+      );
+    }
   };
 
   const handleSearch = async () => {
@@ -80,14 +113,14 @@ const FriendPage = () => {
 
     try {
       const result = await searchFriend(searchTerm);
-      setSearchResult(result);
+      setSearchResult([result]); // Đảm bảo rằng kết quả là mảng, nếu không sẽ không render đúng
     } catch (err) {
       console.error('Lỗi tìm kiếm:', err);
       setSearchResult([]);
     }
   };
 
-  const renderCards = (list, type) => (
+  const renderCards = (list) => (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-6">
       {list.map((user) => (
         <div
@@ -102,7 +135,7 @@ const FriendPage = () => {
             />
           </div>
           <p className="font-semibold text-lg text-gray-800 mb-3">{user.fullName}</p>
-          {getButton(type, user.id)}
+          {getButton(user)} {/* Hiển thị nút phù hợp */}
         </div>
       ))}
     </div>
@@ -133,7 +166,7 @@ const FriendPage = () => {
       {searchResult.length > 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-2 text-center">Kết quả tìm kiếm</h2>
-          {renderCards(searchResult, 'friend')}
+          {renderCards(searchResult)}
         </div>
       )}
 
@@ -144,11 +177,10 @@ const FriendPage = () => {
             <div
               key={tab.key}
               onClick={() => setSelectedTab(tab.key)}
-              className={`cursor-pointer px-4 py-2 text-sm font-medium ${
-                selectedTab === tab.key
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-600 hover:text-blue-500'
-              }`}
+              className={`cursor-pointer px-4 py-2 text-sm font-medium ${selectedTab === tab.key
+                ? 'border-b-2 border-blue-600 text-blue-600'
+                : 'text-gray-600 hover:text-blue-500'
+                }`}
             >
               {tab.label}
             </div>
@@ -156,9 +188,9 @@ const FriendPage = () => {
       </div>
 
       {/* Danh sách theo tab */}
-      {selectedTab === 'friends' && renderCards(friends, 'friend')}
-      {selectedTab === 'sent' && renderCards(sentRequests, 'sent')}
-      {selectedTab === 'pending' && renderCards(pendingRequests, 'pending')}
+      {selectedTab === 'friends' && renderCards(friends)}
+      {selectedTab === 'sent' && renderCards(sentRequests)}
+      {selectedTab === 'pending' && renderCards(pendingRequests)}
     </div>
   );
 };

@@ -84,13 +84,12 @@ export const usePostStore = create((set, get) => ({
       set({ posts: data });
 
     } catch (error) {
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra");
+        toast.error(error.response?.data?.message || "Có lỗi xảy ra");
     } finally {
       set({ isLoading: false });
     }
   },
 
-  // Hàm để lấy dữ liệu bài đăng từ API
   fetchPosts: async () => {
     set({ loading: true, error: null });
 
