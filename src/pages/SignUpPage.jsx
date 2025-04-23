@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent } from "../components/ui/Card";
@@ -18,8 +18,10 @@ const SignUpPage = () => {
     confirmPassword: "",
   });
   const [error, setError] = useState(null);
+  const [errorSignup, setErrorSignup] = useState();
 
   const { signup, isSigningUp } = useAuthStore();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -49,6 +51,7 @@ const SignUpPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setErrorSignup(null);
 
     if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
       setError({ message: "Please fill in all fields" });
@@ -65,7 +68,14 @@ const SignUpPage = () => {
       email: formData.email,
       password: formData.password,
     };
-    await signup(signupData);
+    const result = await signup(signupData); // Nhận kết quả từ signup
+    if (result) {
+      // Nếu có lỗi (result không phải null), cập nhật errorSignup
+      setErrorSignup(result);
+    } else {
+      // Nếu thành công, điều hướng đến newsfeeds
+      navigate("/newsfeeds");
+    }
   };
 
   return (
@@ -79,6 +89,8 @@ const SignUpPage = () => {
               </div>
               <h1 className="text-2xl font-bold mt-2">Create Account</h1>
               <p className="text-base-content/60">Sign up for a new account</p>
+              {/* Hiển thị lỗi nếu có */}
+              {errorSignup && <p className="text-red-500 text-sm mt-2">{errorSignup}</p>}
             </div>
           </div>
 

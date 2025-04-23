@@ -47,13 +47,19 @@ export const useAuthStore = create((set, get) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
-      localStorage.setItem("authUser", JSON.stringify(res.data));
-
-      set({ authUser: res.data });
-      toast.success("Tạo tài khoản thành công");
-      get().connectSocket();
+      if (res.status === 201) {
+        localStorage.setItem("authUser", JSON.stringify(res.data));
+        set({ authUser: res.data });
+        toast.success("Tạo tài khoản thành công");
+        get().connectSocket();
+        return null; // Trả về null khi thành công
+      } else {
+        const errorMessage = res.data?.message || "Đăng ký thất bại";
+        return errorMessage; // Trả về thông báo lỗi
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Đăng ký thất bại");
+      const errorMessage = error.response?.data?.message || "Đăng ký thất bại";
+      return errorMessage; // Trả về thông báo lỗi
     } finally {
       set({ isSigningUp: false });
     }
@@ -82,7 +88,7 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       console.error("Lỗi đăng nhập:", error);
       const errorMessage =
-        error?.response?.data?.message || "Đăng nhập thất bại";
+        error?.response?.data?.message || "Invalid password or email";
       toast.error(errorMessage);
       set({ authUser: null });
       localStorage.removeItem("authUser");
