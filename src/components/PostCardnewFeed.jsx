@@ -126,7 +126,7 @@ const PostCard = ({ post }) => {
             <Heart
               className={`w-5 h-5 ${liked ? "text-red-500 fill-red-500" : "text-gray-400"}`}
             />
-            <span>{countLike}     <span>{likedUsers.length >= 1 ? likedUsers[0].username + ", " + likedUsers[1].username + ', và '+likedUsers.length-1+' người khác': '' }</span></span>
+            <span>{countLike}    </span>
           </button>
           <button onClick={() => setShowComments(!showComments)} className="flex items-center gap-1">
             <MessageCircle className="w-5 h-5" />
