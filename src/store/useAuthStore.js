@@ -3,6 +3,7 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import useChatStore from "./useChatStore";
 
 export const useAuthStore = create((set, get) => ({
   authUser: JSON.parse(localStorage.getItem("authUser")) || null,
@@ -82,6 +83,13 @@ export const useAuthStore = create((set, get) => ({
 
       set({ authUser: userData });
       localStorage.setItem("authUser", JSON.stringify(userData));
+
+      // Gọi fetchUserProfile để lấy id, fullName, avatar
+    await useChatStore.getState().fetchUserProfile(userData, (updatedUser) => {
+      set({ authUser: updatedUser });
+      localStorage.setItem("authUser", JSON.stringify(updatedUser));
+    });
+
       toast.success("Đăng nhập thành công");
       get().connectSocket();
       return null;
@@ -254,7 +262,7 @@ export const useAuthStore = create((set, get) => ({
       return;
     }
 
-    const userId = authUser.email;
+    const userId = authUser.id;
 
     const socket = new SockJS("https://backendsocial-1.onrender.com/ws");
     const stompClient = new Client({
