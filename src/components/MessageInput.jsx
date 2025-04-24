@@ -1,7 +1,9 @@
 import { useState, useRef } from "react";
 import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
-import uploadImage from "../store/uploadImage"; // Import hàm tải ảnh
+import uploadImage from "../store/uploadImage";
+import { useThemeStore } from "../store/useThemeStore";
+
 
 const MessageInput = ({ onSendMessage }) => {
   const [text, setText] = useState("");
@@ -69,7 +71,7 @@ const MessageInput = ({ onSendMessage }) => {
   return (
     <div className="p-4 w-full">
       {imagePreview && (
-        <div className="mb-3 flex items-center gap-2">
+        <div className="mb-3 flex items-center gap-2 bg-base-300">
           <div className="relative">
             <img
               src={imagePreview}
@@ -107,8 +109,8 @@ const MessageInput = ({ onSendMessage }) => {
           </button>
           <input
             type="text"
-            className="w-full input input-bordered rounded-lg input-sm sm:input-md bg-zinc-950 text-zinc-50"
-            placeholder="Nhập tin nhắn..."
+            className="w-full input input-bordered rounded-lg input-sm sm:input-md text-base-content"
+            placeholder="Enter your message"
             value={text}
             onChange={(e) => setText(e.target.value)}
             disabled={isUploading}

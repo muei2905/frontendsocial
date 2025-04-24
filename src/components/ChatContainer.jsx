@@ -34,6 +34,8 @@ const ChatContainer = ({ selectedUser, setSelectedUser }) => {
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const messageEndRef = useRef(null);
   const messageContainerRef = useRef(null);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
   const { authUser, setAuthUser } = useAuthStore();
 
   useEffect(() => {
@@ -121,6 +123,24 @@ const ChatContainer = ({ selectedUser, setSelectedUser }) => {
     };
   }, [page, totalPages, isLoading, isLoadingOlder, selectedUser, authUser, setPage, fetchMessages]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        buttonRef.current &&
+        menuRef.current &&
+        !buttonRef.current.contains(event.target) &&
+        !menuRef.current.contains(event.target)
+      ) {
+        setMenuVisible(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const scrollToBottom = () => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -147,10 +167,28 @@ const ChatContainer = ({ selectedUser, setSelectedUser }) => {
     setSelectedImage(null);
   };
 
-  // Function to format timestamp
   const formatTimestamp = (timestamp) => {
     const date = new Date(parseInt(timestamp));
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  // Hàm kiểm tra xem tin nhắn có phải là tin nhắn mới nhất của người gửi hay không
+  const isLatestSenderMessage = (index) => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      const isSender = String(msg.sender?.id || msg.senderId) === String(userId);
+      if (isSender) {
+        return i === index;
+      }
+    }
+    return false;
+  };
+
+  // Kiểm tra xem tin nhắn mới nhất trong cuộc trò chuyện có phải của người gửi không
+  const isLatestMessageFromSender = () => {
+    if (messages.length === 0) return false;
+    const lastMessage = messages[messages.length - 1];
+    return String(lastMessage.sender?.id || lastMessage.senderId) === String(userId);
   };
 
   return (
@@ -167,142 +205,155 @@ const ChatContainer = ({ selectedUser, setSelectedUser }) => {
             {noMoreMessages && (
               <p className="text-center text-gray-400">Không còn tin nhắn cũ</p>
             )}
-            {
-              messages.length > 0 ? (
-                messages.map((message, index) => {
-                  const isFromSelectedUser =
-                    String(message.sender?.id || message.senderId) === String(selectedUser.userId);
-                  const isSender = String(message.sender?.id || message.senderId) === String(userId);
-                  const previousMessage = messages[index - 1];
-                  const nextMessage = messages[index + 1];
-                  const isSameSenderAsPrevious =
-                    previousMessage &&
-                    String(previousMessage.sender?.id || previousMessage.senderId) ===
-                      String(message.sender?.id || message.senderId);
-                  const isSameSenderAsNext =
-                    nextMessage &&
-                    String(nextMessage.sender?.id || nextMessage.senderId) ===
-                      String(message.sender?.id || message.senderId);
-                  const showAvatar = !isSameSenderAsNext || index === messages.length - 1;
-                  const marginClass = isSameSenderAsPrevious ? "mb-0.5" : "mb-3";
-                  // Determine if this is the latest message from this sender
-                  const isLatestMessage = !nextMessage || 
-                    String(nextMessage.sender?.id || nextMessage.senderId) !== 
+            {messages.length > 0 ? (
+              messages.map((message, index) => {
+                const isFromSelectedUser =
+                  String(message.sender?.id || message.senderId) === String(selectedUser.userId);
+                const isSender = String(message.sender?.id || message.senderId) === String(userId);
+                const previousMessage = messages[index - 1];
+                const nextMessage = messages[index + 1];
+                const isSameSenderAsPrevious =
+                  previousMessage &&
+                  String(previousMessage.sender?.id || previousMessage.senderId) ===
                     String(message.sender?.id || message.senderId);
-                  return (
+                const isSameSenderAsNext =
+                  nextMessage &&
+                  String(nextMessage.sender?.id || nextMessage.senderId) ===
+                    String(message.sender?.id || message.senderId);
+                const showAvatar = !isSameSenderAsNext || index === messages.length - 1;
+                const marginClass = isSameSenderAsPrevious ? "mb-0.5" : "mb-3";
+                const isLatestMessage =
+                  !nextMessage ||
+                  String(nextMessage.sender?.id || nextMessage.senderId) !==
+                    String(message.sender?.id || message.senderId);
+
+                return (
+                  <div
+                    key={message.id || index}
+                    className={`flex flex-col ${
+                      isFromSelectedUser ? "items-start" : "items-end"
+                    } ${marginClass} animate__animated animate__fadeInUp relative group`}
+                    ref={index === messages.length - 1 ? messageEndRef : null}
+                  >
                     <div
-                      key={message.id || index}
-                      className={`flex flex-col ${
-                        isFromSelectedUser ? "items-start" : "items-end"
-                      } ${marginClass} animate__animated animate__fadeInUp relative group`}
-                      ref={index === messages.length - 1 ? messageEndRef : null}
+                      className={`flex w-full ${
+                        isFromSelectedUser ? "flex-row" : "flex-row-reverse"
+                      } gap-2 max-w-[90%]`}
                     >
-                      <div
-                        className={`flex w-full ${
-                          isFromSelectedUser ? "flex-row" : "flex-row-reverse"
-                        } gap-2 max-w-[70%]`}
-                      >
-                        {/* Avatar */}
-                        {showAvatar ? (
-                          <div className="chat-image avatar flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-zinc-50 shadow-lg">
-                              <img
-                                src={isFromSelectedUser ? selectedUser.avatar || "/avatar.png" : message.sender?.avatar || "/avatar.png"}
-                                alt={isFromSelectedUser ? selectedUser.avatar || "Người dùng" : message.sender?.avatar || "Người dùng"}
-                                className="object-cover w-full h-full"
-                              />
-                            </div>
+                      {/* Avatar */}
+                      {showAvatar ? (
+                        <div className="chat-image avatar flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-zinc-50 shadow-lg">
+                            <img
+                              src={
+                                isFromSelectedUser
+                                  ? selectedUser.avatar || "/avatar.png"
+                                  : message.sender?.avatar || "/avatar.png"
+                              }
+                              alt={
+                                isFromSelectedUser
+                                  ? selectedUser.avatar || "Người dùng"
+                                  : message.sender?.avatar || "Người dùng"
+                              }
+                              className="object-cover w-full h-full"
+                            />
                           </div>
-                        ) : (
-                          <div className="w-10 h-10 flex-shrink-0" />
-                        )}
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 flex-shrink-0" />
+                      )}
 
-                        {/* Message Content and Menu */}
-                        <div className="flex flex-col flex-1 relative">
-                          {/* Message Menu for Sender */}
-                          {isSender && !message.deleted && (
-                            <div className="absolute left-[-2px] top-2 z-20">
-                              <button
-                                onClick={() => setMenuVisible(menuVisible === index ? null : index)}
-                                className="text-gray-400 hover:text-white transition-opacity opacity-0 group-hover:opacity-100"
+                      {/* Message Content and Menu */}
+                      <div className="flex flex-col flex-1 relative">
+                        {/* Message Menu for Sender */}
+                        {isSender && !message.deleted && message.status === "sent" && (
+                          <div className="absolute -right-6 top-2 z-20">
+                            <button
+                              ref={buttonRef}
+                              onClick={() => setMenuVisible(menuVisible === index ? null : index)}
+                              className="text-gray-400 hover:text-white transition-opacity opacity-0 group-hover:opacity-100"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
                               >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-5 w-5"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 6h.01M12 12h.01M12 18h.01"
+                                />
+                              </svg>
+                            </button>
+                            {menuVisible === index && (
+                              <div
+                                ref={menuRef}
+                                className="absolute right-0 -top-10 text-white rounded-lg shadow-lg z-30 min-w-[120px] bg-neutral-800 flex-1"
+                              >
+                                <button
+                                  onClick={() => onDeleteMessage(message.id)}
+                                  className="block px-4 py-2 hover:bg-neutral-700 rounded-lg w-full text-left"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 6h.01M12 12h.01M12 18h.01"
-                                  />
-                                </svg>
-                              </button>
-                              {menuVisible === index && (
-                                <div className="absolute left-0 top-6 text-white rounded-lg shadow-lg z-20 min-w-[120px]">
-                                  <button
-                                    onClick={() => onDeleteMessage(message.id)}
-                                    className="block px-4 py-2 hover:bg-neutral-700 rounded-lg w-full text-left"
-                                  >
-                                    Recall Message
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Message Bubble */}
-                          <div
-                            className={`chat-bubble ${
-                              isFromSelectedUser
-                                ? "bg-neutral-900 text-white"
-                                : "bg-gradient-to-r from-[#5c5c5c] to-zinc-800 text-white"
-                            } rounded-lg p-3 break-words whitespace-pre-wrap max-w-[90%] ${
-                              message.deleted ? "italic text-gray-400" : ""
-                            } ${isFromSelectedUser ? "mr-auto" : "ml-auto"}`}
-                          >
-                            {message.deleted ? (
-                              <p>This message has been recalled.</p>
-                            ) : (
-                              <>
-                                {message.picture && (
-                                  <img
-                                    src={message.picture}
-                                    alt="Hình ảnh"
-                                    className="w-[200px] rounded-lg mb-2 cursor-pointer"
-                                    onClick={() => openImagePopup(message.picture)}
-                                  />
-                                )}
-                                {message.content && (
-                                  <p className="break-words whitespace-pre-wrap">{message.content}</p>
-                                )}
-                                {isLatestMessage && message.timestamp && (
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    {formatTimestamp(message.timestamp)}
-                                  </p>
-                                )}
-                              </>
+                                  Recall Message
+                                </button>
+                              </div>
                             )}
                           </div>
+                        )}
 
-                          {/* Sent Status */}
-                          {isSender && !message.deleted && index === messages.length - 1 && (
-                            <p className="text-xs text-gray-400 text-right mt-1">Đã gửi</p>
+                        {/* Message Bubble */}
+                        <div
+                          className={`chat-bubble ${
+                            isFromSelectedUser
+                              ? "bg-neutral-900 text-white"
+                              : "bg-gradient-to-r from-[#5c5c5c] to-zinc-800 text-white"
+                          } rounded-lg p-3 break-words whitespace-pre-wrap max-w-[90%] ${
+                            message.deleted ? "italic text-gray-400" : ""
+                          } ${isFromSelectedUser ? "mr-auto" : "ml-auto"}`}
+                        >
+                          {message.deleted ? (
+                            <p>This message has been recalled.</p>
+                          ) : (
+                            <>
+                              {message.picture && (
+                                <img
+                                  src={message.picture}
+                                  alt="Hình ảnh"
+                                  className="w-[200px] rounded-lg mb-2 cursor-pointer"
+                                  onClick={() => openImagePopup(message.picture)}
+                                />
+                              )}
+                              {message.content && (
+                                <p className="break-words whitespace-pre-wrap">{message.content}</p>
+                              )}
+                              {isLatestMessage && message.timestamp && (
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {formatTimestamp(message.timestamp)}
+                                </p>
+                              )}
+                            </>
                           )}
                         </div>
+
+                        {/* Status for the Latest Message of Sender */}
+                        {isSender && !message.deleted && isLatestSenderMessage(index) && isLatestMessageFromSender() && (
+                          <p className="text-xs text-gray-400 text-right mt-1">
+                            {message.status === "sending" ? "Sending" : "Sent"}
+                          </p>
+                        )}
                       </div>
                     </div>
-                  );
-                })
-              ) : (
-                !isLoading && !isLoadingOlder && (
-                  <p className="text-center text-gray-400">Chưa có tin nhắn</p>
-                )
+                  </div>
+                );
+              })
+            ) : (
+              !isLoading && !isLoadingOlder && (
+                <p className="text-center text-gray-400">Chưa có tin nhắn</p>
               )
-            }
+            )}
           </div>
           <MessageInput onSendMessage={onSendMessage} />
           {showScrollDownButton && (
