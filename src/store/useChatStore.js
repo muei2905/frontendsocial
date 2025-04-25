@@ -69,16 +69,41 @@ const useChatStore = create((set, get) => ({
 
         messageData.deleted = messageData.deleted || false;
         messageData.picture = messageData.picture || null;
+        messageData.status = "sent"; // Set status to "sent" for WebSocket messages
 
         set((state) => {
           const prevMessages = state.messages || [];
-          const isDuplicate = prevMessages.some(
+          // Check if this is an update to a temporary message (sender case)
+          const tempMessageIndex = prevMessages.findIndex(
             (msg) =>
-              msg.content === messageData.content &&
+              msg.status === "sending" &&
               msg.senderId === messageData.senderId &&
               msg.receiverId === messageData.receiverId &&
-              msg.timestamp === messageData.timestamp &&
-              msg.picture === messageData.picture
+              msg.content === messageData.content &&
+              msg.picture === messageData.picture &&
+              Math.abs(parseInt(msg.timestamp) - parseInt(messageData.timestamp)) < 1000
+          );
+
+          if (tempMessageIndex !== -1) {
+            // Update the temporary message with the final data
+            const updatedMessages = [...prevMessages];
+            updatedMessages[tempMessageIndex] = {
+              ...messageData,
+              id: messageData.id, // Use backend-assigned ID
+              status: "sent",
+            };
+            return { messages: updatedMessages, shouldScrollToBottom: true };
+          }
+
+          // Otherwise, add as a new message (receiver case or duplicate check)
+          const isDuplicate = prevMessages.some(
+            (msg) =>
+              msg.id === messageData.id ||
+              (msg.content === messageData.content &&
+                msg.senderId === messageData.senderId &&
+                msg.receiverId === messageData.receiverId &&
+                msg.timestamp === messageData.timestamp &&
+                msg.picture === messageData.picture)
           );
           if (isDuplicate) {
             return { messages: prevMessages };
@@ -130,13 +155,15 @@ const useChatStore = create((set, get) => ({
       return;
     }
 
+    const tempId = `temp-${Date.now()}-${Math.random()}`; // Temporary ID for sender's UI
+    const timestamp = String(Date.now());
     const payload = {
       senderId: userId,
       receiverId: selectedUser.userId,
       content: newMessage.text || "",
       picture: newMessage.image || null,
-      timestamp: String(Date.now()),
-      timeStamp: String(Date.now()),
+      timestamp,
+      timeStamp: timestamp,
       sender: {
         id: userId,
         fullName: authUser?.fullName || "Người dùng",
@@ -148,12 +175,25 @@ const useChatStore = create((set, get) => ({
         avatar: selectedUserDetails?.avatar || "/avatar.png",
       },
       deleted: false,
+      status: "sending", // Initial status
+      id: tempId, // Temporary ID
     };
 
     console.log("Gửi tin nhắn tới WebSocket:", payload);
 
+    // Add the message to the sender's UI immediately
+    set((state) => {
+      const prevMessages = state.messages || [];
+      const updatedMessages = [...prevMessages, payload].sort((a, b) => {
+        const timestampA = a?.timestamp ? parseInt(a.timestamp) : 0;
+        const timestampB = b?.timestamp ? parseInt(b.timestamp) : 0;
+        return timestampA - timestampB;
+      });
+      return { messages: updatedMessages, shouldScrollToBottom: true };
+    });
+
     try {
-      const response = await axiosInstance.post(
+      await axiosInstance.post(
         "/api/messages/send",
         {
           senderId: userId,
@@ -166,25 +206,35 @@ const useChatStore = create((set, get) => ({
         }
       );
 
-      payload.id = response.data.id;
-
       socket.publish({
         destination: "/app/chat",
-        body: JSON.stringify(payload),
-      });
-
-      set((state) => {
-        const prevMessages = state.messages || [];
-        const updatedMessages = [...prevMessages, payload].sort((a, b) => {
-          const timestampA = a?.timestamp ? parseInt(a.timestamp) : 0;
-          const timestampB = b?.timestamp ? parseInt(b.timestamp) : 0;
-          return timestampA - timestampB;
-        });
-        return { messages: updatedMessages, shouldScrollToBottom: true };
+        body: JSON.stringify({
+          senderId: userId,
+          receiverId: selectedUser.userId,
+          content: newMessage.text || "",
+          picture: newMessage.image || null,
+          timestamp,
+          timeStamp: timestamp,
+          sender: {
+            id: userId,
+            fullName: authUser?.fullName || "Người dùng",
+            avatar: authUser?.avatar || "/avatar.png",
+          },
+          receiver: {
+            id: selectedUser.userId,
+            fullName: selectedUserDetails?.fullName || "Người dùng",
+            avatar: selectedUserDetails?.avatar || "/avatar.png",
+          },
+          deleted: false,
+        }),
       });
     } catch (error) {
       console.error("Lỗi khi gửi tin nhắn:", error);
       toast.error("Không thể gửi tin nhắn. Vui lòng thử lại.");
+      // Optionally remove the temporary message on failure
+      set((state) => ({
+        messages: state.messages.filter((msg) => msg.id !== tempId),
+      }));
     }
   },
 
@@ -252,6 +302,8 @@ const useChatStore = create((set, get) => ({
       const content = response.data.content || response.data.messages || [];
       const totalPages = response.data.totalPages || 1;
 
+      console.log("Fetched messages:", content, "Total Pages:", totalPages);
+
       if (!Array.isArray(content)) {
         console.warn("Dữ liệu tin nhắn không phải mảng:", content);
         return;
@@ -261,6 +313,7 @@ const useChatStore = create((set, get) => ({
         ...msg,
         deleted: msg.deleted || false,
         picture: msg.picture || null,
+        status: "sent", // Fetched messages are already sent
       }));
 
       set((state) => {

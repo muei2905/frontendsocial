@@ -214,11 +214,11 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
                   <p className="text-sm text-muted-foreground truncate">
                     {user.lastMessage ? (
                       <>
-                        {user.lastMessage.sentByCurrentUser ? "You: " : ""}
-                        {user.lastMessage.content || "Send a picture"}
-                      </>
+                      {user.lastMessage.sentByCurrentUser ? "You: " : ""}
+                      {user.lastMessage.content || "Send a picture"}
+                    </>
                     ) : (
-                      "No messages yet"
+                       "No message yet"
                     )}
                   </p>
                   {user.lastMessage && (
