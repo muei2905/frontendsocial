@@ -1,52 +1,56 @@
 import { useEffect } from "react";
-import { usePostStore } from "../store/usePostStore"; 
+import { usePostStore } from "../store/usePostStore";
 import PostCard from "../components/PostCardnewFeed";
 import PostInput from "../components/PostInput";
 
 const NewsFeed = () => {
-  const { posts, getPosts, createPost, isLoading } = usePostStore(); 
+  const { posts, getPosts, createPost, isLoading } = usePostStore();
 
   useEffect(() => {
-    getPosts(); 
+    getPosts();
   }, [getPosts]);
 
   const handleNewPost = (newPost) => {
     createPost(newPost);
   };
-  
-  
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center min-h-screen bg-  text-white">
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative w-12 h-12">
-              <div className="absolute inset-0 rounded-full border-4 border-blue-500 opacity-30"></div>
-              <div className="absolute inset-0 rounded-full border-t-4 border-blue-500 animate-spin"></div>
-            </div>
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-base-100 text-base-content">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-12 h-12">
+            <div className="absolute inset-0 rounded-full border-4 border-primary opacity-30"></div>
+            <div className="absolute inset-0 rounded-full border-t-4 border-primary animate-spin"></div>
           </div>
+          <span className="text-sm opacity-70">Loading...</span>
         </div>
-      );
-    }
-    
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center text-white min-h-screen p-4">
-      <h1 className="text-3xl font-extrabold text-center mb-6 text-blue-400">
-        News Feed
-      </h1>
+    <div className="flex flex-col items-center text-base-content bg-base-100 min-h-screen p-4">
+  
 
-      <div className="w-full max-w-3xl">
-        <PostInput onPost={handleNewPost} />
-      </div>
+  <div className="w-full max-w-3xl flex flex-col gap-6">
+    {/* Post Input */}
+    <PostInput onPost={handleNewPost} />
 
-      <div className="flex flex-col gap-4 w-full max-w-3xl mt-6 -ml-48">
-        {
-          posts.map((post) => (
-            
-            <PostCard key={post.id} post={post} /> 
-          ))
-        }
+    {/* Post List */}
+    {posts.length === 0 ? (
+      <div className="text-center text-sm opacity-70">
+        No posts yet. Be the first to post!
       </div>
-    </div>
+    ) : (
+      <div className="flex flex-col gap-4">
+        {posts.map((post) => (
+          <PostCard key={post.id} post={post} />
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
   );
 };
 

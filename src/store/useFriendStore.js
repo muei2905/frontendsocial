@@ -105,6 +105,7 @@ export const useFriendStore = create((set, get) => ({
             });
     
             if (response.status === 200) {
+                console.log(response.data)
                 console.log("Đã trở thành bạn bè");
                 return true;
             } else {
