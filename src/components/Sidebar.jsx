@@ -178,10 +178,10 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
   }, [authUser, stompClient]);
 
   return (
-    <aside className="h-full w-80 bg-neutral-600 text-white p-6 rounded-2xl shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-indigo-400">Messages</h2>
+    <aside className="h-full w-80 bg-muted text-foreground p-6 rounded-2xl shadow-lg transition-colors">
+      <h2 className="text-2xl font-bold mb-6 text-primary">Messages</h2>
 
-      {/* Sử dụng component SearchFriends */}
+      {/* Search box */}
       <SearchFriends authUser={authUser} onSelectUser={setSelectedUser} />
 
       {/* Danh sách contacts */}
@@ -190,9 +190,10 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
           users.map((user) => (
             <div
               key={user.userId}
-              className={`flex items-center gap-4 p-4 rounded-lg hover:bg-gray-600 cursor-pointer transition-colors duration-200 ${
-                selectedUser?.userId === user.userId ? "bg-neutral-900" : "bg-neutral-600"
-              }`}
+              className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-colors duration-200 ${selectedUser?.userId === user.userId
+                  ? "bg-accent"
+                  : "hover:bg-muted/70 bg-muted"
+                }`}
               onClick={() => {
                 console.log("Selected user:", user);
                 setSelectedUser({
@@ -210,7 +211,7 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
               <div className="flex-1">
                 <p className="font-medium text-lg">{user.fullName}</p>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm text-gray-400 truncate">
+                  <p className="text-sm text-muted-foreground truncate">
                     {user.lastMessage ? (
                       <>
                         {user.lastMessage.sentByCurrentUser ? "You: " : ""}
@@ -221,7 +222,7 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
                     )}
                   </p>
                   {user.lastMessage && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       · {formatLastMessageTime(user.lastMessage.timestamp)}
                     </span>
                   )}
@@ -230,10 +231,11 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
             </div>
           ))
         ) : (
-          <p className="text-gray-400">No contacts found.</p>
+          <p className="text-muted-foreground">No contacts found.</p>
         )}
       </div>
     </aside>
+
   );
 };
 
