@@ -88,7 +88,6 @@ export const ProfilePage = () => {
     );
   }
 
-  // Nếu có lỗi, hiển thị thông báo lỗi
   if (userError || postsError) {
     return (
       <div className="w-full min-h-screen p-4" style={{ marginLeft: "16rem" }}>
@@ -97,17 +96,15 @@ export const ProfilePage = () => {
     );
   }
 
-  // Sắp xếp bài đăng theo thời gian tạo (mới nhất → cũ nhất)
   const sortedPosts = [...posts].sort((a, b) => {
     return new Date(b.createAt) - new Date(a.createAt);
   });
 
   return (
     <div className="max-w-6xl mx-auto" style={{ marginLeft: "16rem" }}>
-      {/* Thông tin người dùng */}
       <section className="p-6 flex justify-between items-start">
         <div className="flex items-start gap-6">
-          <Avatar className="w-[200px] h-[200px]">
+          <Avatar className="w-[150px] h-[150px]">
             <AvatarImage
               src={
                 user?.avatar ||
@@ -119,12 +116,12 @@ export const ProfilePage = () => {
               {user?.fullName ? user.fullName[0] : "T"}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col justify-center mt-16">
-            <h2 className="text-2xl font-bold text-red-200">
+          <row className="flex flex-col justify-center mt-12">
+            <h2 className="text-2xl font-bold text-base-content">
               {user?.fullName || "Unknown"}
             </h2>
             <p className="text-lg text-gray-500">{user?.email || "No email"}</p>
-          </div>
+          </row>
         </div>
         <button
             onClick={handleOpenPopup}
@@ -135,7 +132,6 @@ export const ProfilePage = () => {
           </button>
       </section>
 
-      {/* Sử dụng component ProfileDetails */}
       <ProfileDetails
         isOpen={isPopupOpen}
         onClose={handleClosePopup}
@@ -148,12 +144,10 @@ export const ProfilePage = () => {
 
       <Separator className="w-[95%] bg-gray-900" />
 
-      {/* Form tạo bài đăng */}
       <section className="relative w-full my-1 mt-4">
         <PostInput onPost={handleNewPost} />
       </section>
 
-      {/* Danh sách bài đăng từ store */}
       <section className="mt-4">
         {sortedPosts.length === 0 ? (
           <p>No posts here.</p>

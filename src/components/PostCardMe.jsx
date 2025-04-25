@@ -19,7 +19,7 @@ const PostCardMe = ({ post }) => {
   const avt = ''; 
   const [visibleComments, setVisibleComments] = useState(5);
 
-  const [showMenu, setShowMenu] = useState(false); // Trạng thái để hiển thị menu
+  const [showMenu, setShowMenu] = useState(false); 
   const [showEditModal, setShowEditModal] = useState(false);
 
   const likedUsers = post.likedUsers;
@@ -101,7 +101,7 @@ const PostCardMe = ({ post }) => {
       )}
 
       {/* Nội dung card */}
-      <div className={`mt-4 border border-gray-700 shadow-lg rounded-lg ${isLoadingLike === post.id ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`mt-4 border border-base-100 shadow-2xl shadow-base-300 rounded-lg ${isLoadingLike === post.id ? 'opacity-50 pointer-events-none' : ''}`}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <div className="flex items-center">
@@ -111,7 +111,7 @@ const PostCardMe = ({ post }) => {
               className="w-10 h-10 rounded-full object-cover"
             />
             <div className="ml-3">
-              <h3 className="font-semibold text-red-200">{post.userName}</h3>
+              <h3 className="font-semibold text-base-content">{post.userName}</h3>
               <p className="text-sm text-gray-400">
                 {formatFriendlyTime(post.createAt)}
               </p>
@@ -145,10 +145,8 @@ const PostCardMe = ({ post }) => {
           </div>
         </div>
 
-        {/* Nội dung post */}
         <p className=" mb-1 pl-4 pt-2 text-lg">{post.content}</p>
 
-        {/* Hình ảnh */}
         {post.imageUrl && (
           <div className="grid grid-cols-1 gap-2">
             <img
@@ -159,7 +157,6 @@ const PostCardMe = ({ post }) => {
           </div>
         )}
 
-        {/* Like & Comment */}
         <div className="flex items-center justify-between p-3 rounded-2xl">
           <button onClick={toggleLike} className="flex items-center gap-1">
             <Heart
@@ -204,7 +201,6 @@ const PostCardMe = ({ post }) => {
               </div>
             )}
 
-            {/* Nhập bình luận */}
             <div className="mt-4 flex items-center gap-2">
               <img
                 src={user.avatar || avt}
@@ -226,7 +222,6 @@ const PostCardMe = ({ post }) => {
           </div>
         )}
       </div>
-      {/* Hiển thị popup chỉnh sửa nếu showEditModal = true */}
       {showEditModal && (
         <EditPostModal post={post} onClose={() => setShowEditModal(false)} />
       )}  
