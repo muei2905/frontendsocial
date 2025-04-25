@@ -191,7 +191,7 @@ const Sidebar = ({ selectedUser, setSelectedUser }) => {
             <div
               key={user.userId}
               className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-colors duration-200 ${selectedUser?.userId === user.userId
-                  ? "bg-accent"
+                  ? "bg-base-300"
                   : "hover:bg-muted/70 bg-muted"
                 }`}
               onClick={() => {

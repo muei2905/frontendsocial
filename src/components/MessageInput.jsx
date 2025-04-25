@@ -107,7 +107,7 @@ const MessageInput = ({ onSendMessage }) => {
           </button>
           <input
             type="text"
-            className="w-full input input-bordered rounded-lg input-sm sm:input-md bg-zinc-950 text-zinc-50"
+            className="w-full input input-bordered rounded-lg input-sm sm:input-md bg-base-200 text-base"
             placeholder="Nhập tin nhắn..."
             value={text}
             onChange={(e) => setText(e.target.value)}

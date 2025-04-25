@@ -256,13 +256,13 @@ const ChatContainer = ({ selectedUser, setSelectedUser }) => {
 
                           {/* Message Bubble */}
                           <div
-                            className={`chat-bubble ${
-                              isFromSelectedUser
-                                ? "bg-neutral-900 text-white"
-                                : "bg-gradient-to-r from-[#5c5c5c] to-zinc-800 text-white"
-                            } rounded-lg p-3 break-words whitespace-pre-wrap max-w-[90%] ${
-                              message.deleted ? "italic text-gray-400" : ""
-                            } ${isFromSelectedUser ? "mr-auto" : "ml-auto"}`}
+                          className={`chat-bubble rounded-2xl p-4 break-words whitespace-pre-wrap max-w-[90%]
+                            ${isFromSelectedUser 
+                              ? "bg-base-200 text-base-content mr-auto shadow" 
+                              : "bg-base-300 text-base-content ml-auto shadow-md"} 
+                            ${message.deleted ? "italic text-gray-400 line-through" : ""}`}
+                          
+                          
                           >
                             {message.deleted ? (
                               <p>This message has been recalled.</p>
