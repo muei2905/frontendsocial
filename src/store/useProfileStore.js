@@ -54,7 +54,6 @@ export const useProfileStore = create((set, get) => ({
       return;
     }
 
-    // Kiểm tra currentUser và user.id
     if (!currentUser || !currentUser.id) {
       set({
         error: "User profile not found. Please try again.",
@@ -69,10 +68,8 @@ export const useProfileStore = create((set, get) => ({
       const cloudName = "dl5tkeog4";
       const preset = "social-network";
 
-      // Lấy avatar ban đầu từ state user
       const originalAvatarUrl = get().user?.avatar || "";
 
-      // Nếu avatar là chuỗi base64 và khác với avatar ban đầu
       if (avatarUrl && avatarUrl.startsWith("data:image/") && avatarUrl !== originalAvatarUrl) {
         
         try {
@@ -99,14 +96,11 @@ export const useProfileStore = create((set, get) => ({
           throw error;
         }
       } else if (avatarUrl === originalAvatarUrl) {
-        // Nếu avatar không thay đổi, giữ nguyên URL cũ
         avatarUrl = originalAvatarUrl;
       } else if (!avatarUrl) {
-        // Nếu không có avatar mới (người dùng xóa), đặt thành null
         avatarUrl = null;
       }
 
-      // Gửi dữ liệu lên API
       const response = await axiosInstance.put(
         `/api/users/${currentUser.id}/profile`,
         {
@@ -121,7 +115,6 @@ export const useProfileStore = create((set, get) => ({
         }
       );
 
-      // Cập nhật state user với dữ liệu mới
       set((state) => ({
         user: { ...state.user, ...response.data },
         isUpdatingProfile: false,

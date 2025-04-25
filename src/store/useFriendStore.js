@@ -75,14 +75,15 @@ export const useFriendStore = create((set, get) => ({
             console.error("Lỗi tìm kiếm bạn bè", error);
             throw error;
         }
-    }, 
+    },
     deleteFriend: async (id) => {
+        set({ isLoadingFriend: true });
         const jwt = useAuthStore.getState().authUser.jwt;
         try {
             const response = await axiosInstance.post(`/api/friendships/unfriend/${id}`, {}, {
                 headers: { Authorization: `Bearer ${jwt}` },
             });
-    
+
             if (response.status === 200) {
                 console.log("Đã xóa bạn thành công");
                 return true;
@@ -92,18 +93,24 @@ export const useFriendStore = create((set, get) => ({
             }
         } catch (error) {
             console.error("Lỗi khi xóa bạn:", error);
+
             return false;
+        } finally {
+            set({ isLoadingFriend: false });
+
         }
     },
-    
+
 
     acceptFriendRequest: async (id) => {
+        set({ isLoadingFriend: true });
+
         const jwt = useAuthStore.getState().authUser.jwt;
         try {
             const response = await axiosInstance.post(`/api/friendships/accept/${id}`, {}, {
                 headers: { Authorization: `Bearer ${jwt}` },
             });
-    
+
             if (response.status === 200) {
                 console.log(response.data)
                 console.log("Đã trở thành bạn bè");
@@ -116,15 +123,21 @@ export const useFriendStore = create((set, get) => ({
             console.error("Lỗi khi thêm bạn:", error);
             return false;
         }
+        finally {
+            set({ isLoadingFriend: true });
+
+        }
     },
 
     cancelSentRequest: async (id) => {
+        set({ isLoadingFriend: true });
+
         const jwt = useAuthStore.getState().authUser.jwt;
         try {
             const response = await axiosInstance.delete(`/api/friendships/cancel?friendId=${id}`, {
                 headers: { Authorization: `Bearer ${jwt}` },
             });
-    
+
             if (response.status === 200) {
                 console.log(response.data)
                 console.log("Đã xóa lời mời thành côngggg");
@@ -137,15 +150,22 @@ export const useFriendStore = create((set, get) => ({
             console.error("Lỗi khi xóa lời mời:", error);
             return false;
         }
+        finally {
+            set({ isLoadingFriend: false });
+
+        }
     },
 
     sendFriendRequest: async (id) => {
+
+        set({ isLoadingFriend: true });
+
         const jwt = useAuthStore.getState().authUser.jwt;
         try {
             const response = await axiosInstance.post(`/api/friendships/add/${id}`, {}, {
                 headers: { Authorization: `Bearer ${jwt}` },
             });
-    
+
             if (response.status === 200) {
                 console.log("Đã gửi lời mời bạn thành công");
                 return true;
@@ -157,7 +177,11 @@ export const useFriendStore = create((set, get) => ({
             console.error("Lỗi khi xóa bạn:", error);
             return false;
         }
+        finally {
+            set({ isLoadingFriend: false });
+
+        }
     },
-    
+
 
 }));
