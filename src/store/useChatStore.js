@@ -281,41 +281,38 @@ const useChatStore = create((set, get) => ({
 
   fetchMessages: async (selectedUser, authUser, pageNum) => {
     if (!selectedUser?.userId || !authUser?.jwt) {
-      console.log("Thiếu thông tin để tải tin nhắn:", { selectedUser, authUser });
+      console.log("Missing information to fetch messages:", { selectedUser, authUser });
       return;
     }
-
+  
     set({ isLoading: true });
     try {
       const response = await axiosInstance.get("/api/messages/between", {
         headers: { Authorization: `Bearer ${authUser.jwt}` },
         params: { receiverId: selectedUser.userId, page: pageNum, size: 20 },
       });
-
-      console.log("API /api/messages/between response:", response.data);
-
+  
+  
       if (!response.data || typeof response.data !== "object") {
-        console.error("Phản hồi API không hợp lệ:", response.data);
+        console.error("Invalid API response:", response.data);
         return;
       }
-
+  
       const content = response.data.content || response.data.messages || [];
       const totalPages = response.data.totalPages || 1;
-
-      console.log("Fetched messages:", content, "Total Pages:", totalPages);
-
+  
       if (!Array.isArray(content)) {
-        console.warn("Dữ liệu tin nhắn không phải mảng:", content);
+        console.warn("Message data is not an array:", content);
         return;
       }
-
+  
       const formattedContent = content.map((msg) => ({
         ...msg,
         deleted: msg.deleted || false,
         picture: msg.picture || null,
-        status: "sent", // Fetched messages are already sent
+        status: "sent",
       }));
-
+  
       set((state) => {
         const prevMessages = state.messages || [];
         const updatedMessages = pageNum === 0 ? formattedContent : [...formattedContent, ...prevMessages];
@@ -330,7 +327,7 @@ const useChatStore = create((set, get) => ({
         };
       });
     } catch (error) {
-      console.error("Lỗi khi tải tin nhắn:", {
+      console.error("Error fetching messages:", {
         status: error.response?.status,
         message: error.message,
         data: error.response?.data,

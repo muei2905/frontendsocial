@@ -75,53 +75,123 @@ const ChatContainer = ({ selectedUser, setSelectedUser }) => {
     }
   }, [messages, shouldScrollToBottom]);
 
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     if (!messageContainerRef.current) return;
+  
+  //     const { scrollTop, scrollHeight, clientHeight } = messageContainerRef.current;
+  //     const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+  
+  //     console.log("Scroll event:", {
+  //       scrollTop,
+  //       scrollHeight,
+  //       clientHeight,
+  //       page,
+  //       totalPages,
+  //       isLoading,
+  //       isLoadingOlder,
+  //       noMoreMessages,
+  //     });
+  
+  //     if (scrollTop === 0 && !isLoading && !isLoadingOlder && !noMoreMessages) {
+  //       console.log("Triggering fetch for older messages...");
+  //       setIsLoadingOlder(true);
+  //       const newPage = page + 1;
+  //       console.log("Attempting to fetch page:", newPage, "of", totalPages);
+  
+  //       if (newPage >= totalPages) {
+  //         console.log("No more pages to load. Setting noMoreMessages to true.");
+  //         setNoMoreMessages(true);
+  //         setIsLoadingOlder(false);
+  //         return;
+  //       }
+  
+  //       fetchMessages(selectedUser, authUser, newPage)
+  //         .then(() => {
+  //           console.log("Successfully fetched page:", newPage);
+  //           setPage(newPage); // Update page after successful fetch
+  //           setIsLoadingOlder(false);
+  //         })
+  //         .catch((error) => {
+  //           console.error("Error fetching page:", newPage, error);
+  //           setIsLoadingOlder(false);
+  //           toast.error("Failed to load older messages. Please try again.");
+  //         });
+  //     }
+  
+  //     setShowScrollDownButton(!isNearBottom);
+  //   };
+  
+  //   const container = messageContainerRef.current;
+  //   if (container) {
+  //     console.log("Attaching scroll event listener");
+  //     container.addEventListener("scroll", handleScroll);
+  //   }
+  
+  //   return () => {
+  //     if (container) {
+  //       console.log("Removing scroll event listener");
+  //       container.removeEventListener("scroll", handleScroll);
+  //     }
+  //   };
+  // }, [totalPages, isLoading, isLoadingOlder, noMoreMessages, selectedUser, authUser, fetchMessages]);
+
   useEffect(() => {
     const handleScroll = () => {
       if (!messageContainerRef.current) return;
-
+  
       const { scrollTop, scrollHeight, clientHeight } = messageContainerRef.current;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-
-      if (scrollTop < 10 && !isLoading && !isLoadingOlder) {
-        setPage((prevPage) => {
-          const newPage = prevPage + 1;
-          if (newPage >= totalPages) {
-            setNoMoreMessages(true);
-            console.log("Không còn tin nhắn cũ để tải");
-            return prevPage;
-          }
-          setNoMoreMessages(false);
-          setIsLoadingOlder(true);
-          console.log("Fetching older messages, page:", newPage);
-          const previousHeight = messageContainerRef.current.scrollHeight;
-          fetchMessages(selectedUser, authUser, newPage).then(() => {
+  
+      if (scrollTop === 0 && !isLoading && !isLoadingOlder && !noMoreMessages) {
+        setIsLoadingOlder(true);
+        const newPage = page + 1;
+  
+        if (newPage >= totalPages) {
+          setNoMoreMessages(true);
+          setIsLoadingOlder(false);
+          return;
+        }
+  
+        // Capture scroll position before fetch
+        const previousScrollHeight = messageContainerRef.current.scrollHeight;
+        const previousScrollTop = messageContainerRef.current.scrollTop;
+    
+        fetchMessages(selectedUser, authUser, newPage)
+          .then(() => {
+            setPage(newPage); // Update page after successful fetch
+  
+            // Adjust scroll position after new messages are loaded
             if (messageContainerRef.current) {
-              const newHeight = messageContainerRef.current.scrollHeight;
-              messageContainerRef.current.scrollTop = newHeight - previousHeight;
-            }
-            setIsLoadingOlder(false);
-          }).catch((error) => {
-            console.error("Failed to fetch older messages:", error);
-            setIsLoadingOlder(false);
-          });
-          return newPage;
-        });
-      }
+              const newScrollHeight = messageContainerRef.current.scrollHeight;
+              const heightDifference = newScrollHeight - previousScrollHeight;
+              messageContainerRef.current.scrollTop = previousScrollTop + heightDifference;
 
+            }
+  
+            setIsLoadingOlder(false);
+          })
+          .catch((error) => {
+            console.error("Error fetching page:", newPage, error);
+            setIsLoadingOlder(false);
+            toast.error("Failed to load older messages. Please try again.");
+          });
+      }
+  
       setShowScrollDownButton(!isNearBottom);
     };
-
+  
     const container = messageContainerRef.current;
     if (container) {
       container.addEventListener("scroll", handleScroll);
     }
-
+  
     return () => {
       if (container) {
         container.removeEventListener("scroll", handleScroll);
       }
     };
-  }, [page, totalPages, isLoading, isLoadingOlder, selectedUser, authUser, setPage, fetchMessages]);
+  }, [totalPages, isLoading, isLoadingOlder, noMoreMessages, selectedUser, authUser, fetchMessages]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
