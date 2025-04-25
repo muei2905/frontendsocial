@@ -120,42 +120,48 @@ const FriendPage = () => {
   };
 
   const renderCards = (list) => (
-    <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
+      {list.length === 0 && (
+        <div className="col-span-full text-center text-gray-500 py-10">
+          Không có người dùng nào để hiển thị.
+        </div>
+      )}
+  
       {list.map((user) => (
         <div
           key={user.id}
-          className="relative bg-base-200 rounded-2xl shadow-lg p-5 flex flex-col items-center text-center hover:shadow-2xl transition-all duration-300 w-50"
+          className="relative bg-base-200 rounded-2xl shadow-md p-6 flex flex-col items-center text-center transition-all duration-300 hover:shadow-xl"
         >
           {isLoadingFriend && (
-            <div className="absolute inset-0 z-20 rounded-2xl bg-base-100/80 backdrop-blur-sm flex items-center justify-center transition-all duration-300">
-              <div className="flex flex-col items-center gap-2">
-              <span className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></span>
-              <p className="text-sm text-base-content/70 animate-pulse">Đang xử lý...</p>
+            <div className="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-sm bg-white/70 rounded-2xl">
+              <div className="flex flex-col items-center gap-2 animate-pulse">
+                <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm text-gray-600">Đang xử lý...</p>
               </div>
             </div>
           )}
-
-
-          <div>
-            <div className="relative mb-4">
-              <img
-                src={user.avatar}
-                alt={user.fullName}
-                className="w-24 h-24 rounded-full object-cover border-4 border-blue-200 shadow-md hover:scale-110 transform transition-transform duration-300"
-              />
-              <span className="absolute bottom-2 right-6 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></span>
-            </div>
-
-            <p className="font-bold text-lg text-base-300 mb-1">{user.fullName}</p>
-            <p className="text-sm text-gray-500 mb-4">{user.email}</p>
-
+  
+          <div className="mb-4 relative">
+            <img
+              src={user.avatar}
+              alt={user.fullName}
+              className="w-24 h-24 rounded-full border-4 border-primary/30 object-cover shadow transition-transform duration-300 hover:scale-110"
+            />
+          </div>
+  
+          <div className="mb-3">
+            <h3 className="font-semibold text-lg text-base-content">{user.fullName}</h3>
+            <p className="text-sm text-gray-500">{user.email}</p>
+          </div>
+  
+          <div className="mt-auto">
             {getButton(user)}
           </div>
         </div>
-
       ))}
     </div>
   );
+  
   const renderResultCards = (list) => (
     <div className="flex flex-col gap-4 mt-6 w-2/4 mx-auto">
       {list.map((user) => (
@@ -163,7 +169,7 @@ const FriendPage = () => {
           key={user.id}
           className="bg-base-200 rounded-2xl shadow-lg p-4 flex items-center hover:shadow-2xl transition-all duration-300"
         >
-          
+
 
           <div className="relative mr-4">
             <img
@@ -180,7 +186,7 @@ const FriendPage = () => {
           </div>
 
           <div className="ml-auto">
-            {!isLoadingFriend? getButton(user):null}
+            {!isLoadingFriend ? getButton(user) : null}
           </div>
         </div>
       ))}

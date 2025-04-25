@@ -45,7 +45,7 @@ const PostInput = ({ onPost }) => {
   };
 
   return (
-    <div className="relative shadow-lg rounded-xl p-3 w-3/4  bg-base-200 border border-base-200">
+    <div className="relative shadow-lg rounded-xl p-5 w-5/6  bg-base-200 border border-base-200">
       <div className="flex items-start gap-4">
         <img
           src={authUser?.image || "/default-avatar.png"}

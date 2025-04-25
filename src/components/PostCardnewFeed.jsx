@@ -10,6 +10,7 @@ const PostCard = ({ post }) => {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState(post.comments || []);
   const [visibleComments, setVisibleComments] = useState(5);
+  const [showImage, setShowImage] = useState(false);
 
   const { sendCmt, likePost, isLoadingLike } = usePostStore();
   const { authUser } = useAuthStore();
@@ -62,7 +63,7 @@ const PostCard = ({ post }) => {
   };
 
   return (
-    <div className="relative w-3/4 my-1">
+    <div className="relative w-5/6 my-1">
       {isLoadingLike === post.id && (
         <div className="absolute inset-0 bg-black/50 z-10 flex flex-col items-center justify-center rounded-lg">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -85,9 +86,30 @@ const PostCard = ({ post }) => {
         <p className="px-4 pt-1 pb-2 text-base">{post.content}</p>
 
         {post.imageUrl && (
-          <div className="w-full  pb-2">
-            <img src={post.imageUrl} alt="Post" className=" w-full object-cover max-h-96" />
-          </div>
+          <>
+            <div className="w-full pb-2">
+              <img
+                src={post.imageUrl}
+                alt="Post"
+                className="w-full object-cover max-h-96 cursor-pointer hover:opacity-90 transition"
+                onClick={() => setShowImage(true)}
+              />
+            </div>
+
+            {showImage && (
+              <div
+                className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center"
+                onClick={() => setShowImage(false)}
+              >
+                <img
+                  src={post.imageUrl}
+                  alt="Zoomed"
+                  className="h-[90%]  rounded-md shadow-lg "
+                />
+              </div>
+            )}
+          </>
+        
         )}
 
         <div className="flex items-center justify-between text-sm px-4 py-3">

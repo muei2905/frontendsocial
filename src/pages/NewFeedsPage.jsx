@@ -32,11 +32,9 @@ const NewsFeed = () => {
     <div className="flex flex-col items-center text-base-content bg-base-100 min-h-screen p-4">
   
 
-  <div className="w-full max-w-3xl flex flex-col gap-6">
-    {/* Post Input */}
+  <div className="w-full max-w-3xl flex flex-col gap-6 ml-60">
     <PostInput onPost={handleNewPost} />
 
-    {/* Post List */}
     {posts.length === 0 ? (
       <div className="text-center text-sm opacity-70">
         No posts yet. Be the first to post!
